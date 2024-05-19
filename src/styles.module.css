@@ -12,12 +12,15 @@
   --layer-tile: 0;
   --layer-floor: 1;
   --layer-sprite: 2;
+  --layer-overlay: 3;
 }
 
 .field {
   --cell-size: 64px;
   --rows: 10;
   --cols: 10;
+
+  --z-index-overlay: calc(var(--layer-overlay) + var(--rows));
 
   position: relative;
   display: inline-grid;
@@ -37,6 +40,73 @@
       transparent calc(var(--cell-size) - 1px),
       magenta var(--cell-size)
     );
+}
+
+.tile {
+  z-index: var(--layer-tile);
+  background-repeat: repeat;
+}
+
+.sprite {
+  z-index: calc(var(--layer-sprite) + var(--z-index, 0));
+  background-repeat: no-repeat;
+  align-self: end;
+  object-fit: none;
+  object-position: top left;
+}
+
+.transparent {
+  opacity: 0.5;
+}
+
+.wall {
+  background-image: url("/ceil1.png"), url("/wall3.png");
+  background-repeat: repeat-x;
+  background-position: top, bottom;
+  margin-top: -110px;
+  background-position:
+    0px 0px,
+    0px 20px;
+}
+
+.wall-top-corner {
+  background-image: url("/ceil_top_left_1.png"), url("/ceil_left_1.png");
+  background-repeat: no-repeat, repeat-y;
+  margin-left: -20px;
+  margin-bottom: 16px;
+  margin-top: -110px;
+  z-index: var(--z-index-overlay);
+}
+
+.wall-flip {
+  scale: -1 1;
+  margin-left: 0;
+  margin-right: -20px;
+}
+
+.wall-bottom-corner {
+  background-image: url("/ceil_bottom_left_1.png");
+  background-repeat: no-repeat;
+  background-position-y: bottom;
+  background-position-x: left;
+  margin-bottom: -16px;
+  margin-left: -20px;
+  z-index: var(--z-index-overlay);
+}
+
+.wall-bottom {
+  background-image: url("/ceil2.png");
+  background-repeat: repeat-x;
+  background-position-y: bottom;
+  background-position-x: calc(var(--cell-size) / 2), left;
+  margin: 0 -20px calc(var(--cell-size) / -2) -20px;
+  margin-bottom: -16px;
+  z-index: var(--z-index-overlay);
+}
+
+.sprite-32x64 {
+  width: 32px;
+  height: 64px;
 }
 
 @keyframes playerSpriteAnimationFrom1 {
@@ -79,13 +149,16 @@
 
   width: var(--player-size);
   aspect-ratio: 1 / 1;
-  /* background-color: seagreen; */
+  background-color: rgb(46 139 87 / 0.5);
 
-  grid-row: 1;
-  grid-column: 1;
+  grid-area: 1 / 1 / 3 / 3;
+  background-repeat: repeat;
+  /* align-self: center; */
 
-  translate: calc(var(--col, 0) * var(--cell-size) - 20px)
-    calc(var(--row, 0) * var(--cell-size) - 20px);
+  --player-offset: 0px;
+
+  translate: calc(var(--col, 0) * var(--cell-size) - var(--player-offset))
+    calc(var(--row, 0) * var(--cell-size) - var(--player-offset));
 
   background-image: url("/cat64.png");
   background-position: calc(var(--sprite-col, 0) * var(--player-size))
@@ -107,73 +180,4 @@
   animation-timing-function: linear;
   animation-iteration-count: 1;
   animation-fill-mode: forwards;
-}
-
-.tile {
-  z-index: var(--layer-tile);
-  background-repeat: repeat;
-}
-
-.sprite {
-  z-index: calc(var(--layer-sprite) + var(--z-index, 0));
-  background-repeat: no-repeat;
-  align-self: end;
-  object-fit: none;
-  object-position: top left;
-}
-
-.player {
-  background-repeat: repeat;
-  align-self: center;
-}
-
-.transparent {
-  opacity: 0.5;
-}
-
-.wall {
-  background-image: url("/ceil1.png"), url("/wall3.png");
-  background-repeat: repeat-x;
-  background-position: top, bottom;
-  margin-top: -110px;
-  background-position:
-    0px 0px,
-    0px 20px;
-}
-
-.wall-top-corner {
-  background-image: url("/ceil_top_left_1.png"), url("/ceil_left_1.png");
-  background-repeat: no-repeat, repeat-y;
-  margin-left: -20px;
-  margin-bottom: 16px;
-  margin-top: -110px;
-}
-
-.wall-flip {
-  scale: -1 1;
-  margin-left: 0;
-  margin-right: -20px;
-}
-
-.wall-bottom-corner {
-  background-image: url("/ceil_bottom_left_1.png");
-  background-repeat: no-repeat;
-  background-position-y: bottom;
-  background-position-x: left;
-  margin-bottom: -16px;
-  margin-left: -20px;
-}
-
-.wall-bottom {
-  background-image: url("/ceil2.png");
-  background-repeat: repeat-x;
-  background-position-y: bottom;
-  background-position-x: calc(var(--cell-size) / 2), left;
-  margin: 0 -20px calc(var(--cell-size) / -2) -20px;
-  margin-bottom: -16px;
-}
-
-.sprite-32x64 {
-  width: 32px;
-  height: 64px;
 }

@@ -39,7 +39,7 @@ export function TileComponent(
         "background-image": props.sprite
           ? `url("/${props.sprite}.png")`
           : undefined,
-        "grid-area": `${props.row} / ${props.col} / ${props.row + props.height} / ${props.col + props.width}`,
+        "grid-area": `${props.row + 1} / ${props.col + 1} / ${props.row + props.height + 1} / ${props.col + props.width + 1}`,
       }}
     />
   );

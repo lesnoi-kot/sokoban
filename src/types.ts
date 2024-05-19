@@ -16,10 +16,10 @@ type GridUnit = number;
 type CollisionResult = "block" | "pass";
 
 export interface Collider {
-  collideWith(): CollisionResult;
+  getHitBox(): DOMRectReadOnly;
 }
 
-export class Sprite {
+export class Sprite implements Collider {
   sprite: string;
   spritePosition: [WorldUnit, WorldUnit] = [0, 0];
 
@@ -32,10 +32,23 @@ export class Sprite {
   offsetY: WorldUnit = 0;
   classes: string | undefined;
 
-  constructor(sprite: string, row: number = 0, col: number = 0) {
+  // @ts-expect-error
+  private hitbox: DOMRectReadOnly;
+
+  constructor(
+    sprite: string,
+    row: number = 0,
+    col: number = 0,
+    height: number = 1,
+    width: number = 1,
+  ) {
     this.sprite = sprite;
     this.row = row;
     this.col = col;
+    this.cellHeight = height;
+    this.cellWidth = width;
+
+    this.calculateHitBox();
   }
 
   public withSpritePosition(x: WorldUnit, y: WorldUnit): Sprite {
@@ -62,7 +75,20 @@ export class Sprite {
   }
 
   public get gridArea(): string {
-    return `${this.row} / ${this.col} / ${this.row + this.cellHeight} / ${this.col + this.cellWidth}`;
+    return `${this.row + 1} / ${this.col + 1} / ${this.row + this.cellHeight + 1} / ${this.col + this.cellWidth + 1}`;
+  }
+
+  private calculateHitBox(): void {
+    this.hitbox = new DOMRectReadOnly(
+      this.col,
+      this.row,
+      this.cellWidth,
+      this.cellHeight,
+    );
+  }
+
+  public getHitBox(): DOMRectReadOnly {
+    return this.hitbox;
   }
 }
 

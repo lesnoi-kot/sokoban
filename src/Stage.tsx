@@ -4,6 +4,7 @@ import type { Player, Stage } from "./types";
 
 import css from "./styles.module.css";
 import { SpriteComponent } from "./objects";
+import { hasOverlap, scaleRect } from "./utils";
 
 const DIR_SPRITESHEET: Record<Player["dir"], number> = {
   up: 2,
@@ -11,6 +12,8 @@ const DIR_SPRITESHEET: Record<Player["dir"], number> = {
   down: 0,
   left: 3,
 };
+
+const PLAYER_SIZE = 1;
 
 export function StageComponent({ stage }: { stage: Stage }) {
   // const pressedKeys: Record<string, boolean> = {};
@@ -20,8 +23,8 @@ export function StageComponent({ stage }: { stage: Stage }) {
   const [idleDuration, setIdleDuration] = createSignal(0);
 
   const [player, setPlayer] = createSignal<Player>({
-    row: Math.floor(stage.rows / 2),
-    col: Math.floor(stage.cols / 2),
+    row: Math.floor(stage.rows / 2) + 1,
+    col: Math.floor(stage.cols / 2) + 1,
     dir: "down",
     speed: 5,
   });
@@ -57,19 +60,31 @@ export function StageComponent({ stage }: { stage: Stage }) {
 
       switch (keyPressed) {
         case "ArrowUp":
-          nextPosition.row = Math.max(0, nextPosition.row - step);
+          nextPosition.row = Math.max(
+            -PLAYER_SIZE / 2,
+            nextPosition.row - step,
+          );
           nextPosition.dir = "up";
           break;
         case "ArrowRight":
-          nextPosition.col = Math.min(stage.cols - 1, nextPosition.col + step);
+          nextPosition.col = Math.min(
+            stage.cols - 1 - PLAYER_SIZE / 2,
+            nextPosition.col + step,
+          );
           nextPosition.dir = "right";
           break;
         case "ArrowDown":
-          nextPosition.row = Math.min(stage.rows - 1, nextPosition.row + step);
+          nextPosition.row = Math.min(
+            stage.rows - 1 - PLAYER_SIZE / 2,
+            nextPosition.row + step,
+          );
           nextPosition.dir = "down";
           break;
         case "ArrowLeft":
-          nextPosition.col = Math.max(0, nextPosition.col - step);
+          nextPosition.col = Math.max(
+            -PLAYER_SIZE / 2,
+            nextPosition.col - step,
+          );
           nextPosition.dir = "left";
           break;
         default:
@@ -77,11 +92,19 @@ export function StageComponent({ stage }: { stage: Stage }) {
       }
 
       let stumbled = false;
-      const pRow = Math.ceil(nextPosition.row);
-      const pCol = Math.ceil(nextPosition.col);
+
+      const playerHitbox = scaleRect(
+        new DOMRectReadOnly(
+          nextPosition.col,
+          nextPosition.row,
+          2 * PLAYER_SIZE,
+          2 * PLAYER_SIZE,
+        ),
+        0.5,
+      );
 
       for (const obj of stage.sprites) {
-        if (obj.col === pCol && obj.row === pRow) {
+        if (hasOverlap(obj.getHitBox(), playerHitbox)) {
           stumbled = true;
           break;
         }
