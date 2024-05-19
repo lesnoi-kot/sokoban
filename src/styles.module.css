@@ -1,13 +1,13 @@
 .stage {
   margin: 200px;
 
-  image-rendering: optimizeSpeed; /* STOP SMOOTHING, GIVE ME SPEED  */
-  image-rendering: -moz-crisp-edges; /* Firefox                        */
-  image-rendering: -o-crisp-edges; /* Opera                          */
+  image-rendering: optimizeSpeed; /* STOP SMOOTHING, GIVE ME SPEED */
+  image-rendering: -moz-crisp-edges; /* Firefox */
+  image-rendering: -o-crisp-edges; /* Opera  */
   image-rendering: -webkit-optimize-contrast; /* Chrome (and eventually Safari) */
-  image-rendering: pixelated; /* Universal support since 2021   */
-  image-rendering: optimize-contrast; /* CSS3 Proposed                  */
-  -ms-interpolation-mode: nearest-neighbor; /* IE8+                           */
+  image-rendering: pixelated; /* Universal support since 2021 */
+  image-rendering: optimize-contrast; /* CSS3 Proposed */
+  -ms-interpolation-mode: nearest-neighbor; /* IE8+ */
 
   --layer-tile: 0;
   --layer-floor: 1;
@@ -39,34 +39,43 @@
     );
 }
 
-@keyframes playerRun {
+@keyframes playerSpriteAnimationFrom1 {
+  0% {
+    --sprite-col: -1;
+  }
+  25% {
+    --sprite-col: -2;
+  }
+  50% {
+    --sprite-col: -3;
+  }
+  75% {
+    --sprite-col: -4;
+  }
+}
+
+@keyframes playerSpriteAnimationIdle {
   0% {
     --sprite-col: 0;
   }
   25% {
-    --sprite-col: 1;
+    --sprite-col: -1;
   }
   50% {
-    --sprite-col: 2;
+    --sprite-col: -2;
   }
   75% {
-    --sprite-col: 3;
+    --sprite-col: -3;
   }
   100% {
-    --sprite-col: 0;
+    --sprite-col: -2;
   }
-}
-
-.player-running {
-  animation: playerRun;
-  animation-duration: var(--cell-speed);
-  animation-timing-function: linear;
-  animation-iteration-count: 1;
 }
 
 .player {
   --player-size: 64px;
-  --cell-speed: 400ms;
+  --sprite-col: 0;
+  --sprite-row: 0;
 
   width: var(--player-size);
   aspect-ratio: 1 / 1;
@@ -77,11 +86,27 @@
 
   translate: calc(var(--col, 0) * var(--cell-size) - 20px)
     calc(var(--row, 0) * var(--cell-size) - 20px);
-  transition: translate var(--cell-speed) linear;
 
   background-image: url("/cat64.png");
   background-position: calc(var(--sprite-col, 0) * var(--player-size))
     calc(var(--sprite-row, 0) * var(--player-size) - 10px);
+}
+
+.player-running {
+  --cell-speed: 400ms;
+  animation: playerSpriteAnimationFrom1;
+  animation-duration: var(--cell-speed);
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.player-idle {
+  animation: playerSpriteAnimationIdle;
+  --sprite-row: -4 !important;
+  animation-duration: 1000ms;
+  animation-timing-function: linear;
+  animation-iteration-count: 1;
+  animation-fill-mode: forwards;
 }
 
 .tile {
@@ -110,7 +135,6 @@
   background-image: url("/ceil1.png"), url("/wall3.png");
   background-repeat: repeat-x;
   background-position: top, bottom;
-  /* margin-top: calc(-var(--cell-size) * 3); */
   margin-top: -110px;
   background-position:
     0px 0px,
@@ -120,7 +144,6 @@
 .wall-top-corner {
   background-image: url("/ceil_top_left_1.png"), url("/ceil_left_1.png");
   background-repeat: no-repeat, repeat-y;
-  /* margin-top: calc(var(--cell-size) / -2); */
   margin-left: -20px;
   margin-bottom: 16px;
   margin-top: -110px;

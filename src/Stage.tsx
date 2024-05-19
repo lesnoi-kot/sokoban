@@ -1,11 +1,9 @@
-import { For, createSignal, onCleanup, onMount } from "solid-js";
-import clsx from "clsx";
+import { For, createMemo, createSignal, onCleanup, onMount } from "solid-js";
 
-import { COLS, ROWS, WORLD_UNIT_PX } from "./consts";
-import { getLevel } from "./levels/Level1";
-import type { Player, Sprite, Stage } from "./types";
+import type { Player, Stage } from "./types";
 
 import css from "./styles.module.css";
+import { SpriteComponent } from "./objects";
 
 const DIR_SPRITESHEET: Record<Player["dir"], number> = {
   up: 2,
@@ -14,27 +12,19 @@ const DIR_SPRITESHEET: Record<Player["dir"], number> = {
   left: 3,
 };
 
-const DELTA_STEP = 1;
-
-export function Stage() {
+export function StageComponent({ stage }: { stage: Stage }) {
   // const pressedKeys: Record<string, boolean> = {};
   let lastTs = 0;
   let keyPressed: string = "";
-  const [inTransition, setInTransition] = createSignal(false);
-  let playerRef: HTMLDivElement;
+  const [v, setV] = createSignal(0);
+  const [idleDuration, setIdleDuration] = createSignal(0);
+
   const [player, setPlayer] = createSignal<Player>({
-    row: Math.floor(ROWS / 2),
-    col: Math.floor(COLS / 2),
+    row: Math.floor(stage.rows / 2),
+    col: Math.floor(stage.cols / 2),
     dir: "down",
+    speed: 5,
   });
-
-  const stage: Stage = {
-    rows: ROWS,
-    cols: COLS,
-    worldUnit: WORLD_UNIT_PX,
-  };
-
-  const [sprites] = createSignal(getLevel());
 
   function keyDown(event: KeyboardEvent) {
     event.preventDefault();
@@ -43,62 +33,86 @@ export function Stage() {
 
   function keyUp(event: KeyboardEvent) {
     if (
-      ["ArrowUp", "ArrowRight", "ArrowDown", "ArrowLeft"].includes(event.key)
+      // ["ArrowUp", "ArrowRight", "ArrowDown", "ArrowLeft"].includes(event.key)
+      keyPressed === event.key
     ) {
       keyPressed = "";
     }
   }
 
   function tick(ts: DOMHighResTimeStamp) {
-    if (!inTransition() && keyPressed) {
+    const _player = player();
+    const dt = (ts - lastTs) / 1000;
+    lastTs = ts;
+
+    const nextPosition = {
+      row: _player.row,
+      col: _player.col,
+      dir: _player.dir,
+    };
+
+    // Proccess possible player moves
+    if (keyPressed) {
+      const step = _player.speed * dt;
+
       switch (keyPressed) {
         case "ArrowUp":
-          setPlayer((state) => ({
-            ...state,
-            row: Math.max(0, state.row - DELTA_STEP),
-            dir: "up",
-          }));
+          nextPosition.row = Math.max(0, nextPosition.row - step);
+          nextPosition.dir = "up";
           break;
         case "ArrowRight":
-          setPlayer((state) => ({
-            ...state,
-            col: Math.min(stage.cols - 1, state.col + DELTA_STEP),
-            dir: "right",
-          }));
+          nextPosition.col = Math.min(stage.cols - 1, nextPosition.col + step);
+          nextPosition.dir = "right";
           break;
         case "ArrowDown":
-          setPlayer((state) => ({
-            ...state,
-            row: Math.min(stage.rows - 1, state.row + DELTA_STEP),
-            dir: "down",
-          }));
+          nextPosition.row = Math.min(stage.rows - 1, nextPosition.row + step);
+          nextPosition.dir = "down";
           break;
         case "ArrowLeft":
-          setPlayer((state) => ({
-            ...state,
-            col: Math.max(0, state.col - DELTA_STEP),
-            dir: "left",
-          }));
+          nextPosition.col = Math.max(0, nextPosition.col - step);
+          nextPosition.dir = "left";
           break;
         default:
           break;
       }
+
+      let stumbled = false;
+      const pRow = Math.ceil(nextPosition.row);
+      const pCol = Math.ceil(nextPosition.col);
+
+      for (const obj of stage.sprites) {
+        if (obj.col === pCol && obj.row === pRow) {
+          stumbled = true;
+          break;
+        }
+      }
+
+      if (stumbled) {
+        nextPosition.row = _player.row;
+        nextPosition.col = _player.col;
+      }
+
+      setPlayer((state) => ({
+        ...state,
+        ...nextPosition,
+      }));
     }
+
+    const movedDistance = Math.abs(
+      nextPosition.col - _player.col + (nextPosition.row - _player.row),
+    );
+    setV(movedDistance / dt);
+    setIdleDuration((d) => (v() === 0 ? d + dt : 0));
 
     requestAnimationFrame(tick);
   }
 
+  const isMoving = createMemo(() => v() > 0);
+  const isIdle = createMemo(() => idleDuration() >= 3);
+
   onMount(() => {
     document.addEventListener("keydown", keyDown);
     document.addEventListener("keyup", keyUp);
-
-    playerRef.addEventListener("transitionstart", () => {
-      setInTransition(true);
-    });
-
-    playerRef.addEventListener("transitionend", () => {
-      setInTransition(false);
-    });
 
     requestAnimationFrame((ts) => {
       tick((lastTs = ts));
@@ -125,119 +139,27 @@ export function Stage() {
           "--cell-size": stage.worldUnit + "px",
         }}
       >
-        <TileComponent
-          sprite="floor2"
-          row={1}
-          col={1}
-          width={stage.cols}
-          height={stage.rows}
-          className={css.transparent}
-        />
-        <TileComponent
-          className={css.wall}
-          row={1}
-          col={1}
-          width={stage.cols}
-          height={2}
-        />
-        <TileComponent
-          className={css["wall-top-corner"]}
-          row={1}
-          col={1}
-          width={1}
-          height={stage.rows}
-        />
-        <TileComponent
-          className={clsx(css["wall-top-corner"], css["wall-flip"])}
-          row={1}
-          col={stage.cols}
-          width={1}
-          height={stage.rows}
-        />
+        {stage.tiles}
 
-        <TileComponent
-          className={clsx(css["wall-bottom-corner"])}
-          row={stage.rows}
-          col={1}
-          width={1}
-          height={1}
-        />
-        <TileComponent
-          className={clsx(css["wall-bottom-corner"], css["wall-flip"])}
-          row={stage.rows}
-          col={stage.cols}
-          width={1}
-          height={1}
-        />
-        <TileComponent
-          className={clsx(css["wall-bottom"])}
-          row={stage.rows}
-          col={2}
-          width={stage.cols - 2}
-          height={1}
-        />
-
-        <For each={sprites()}>
+        <For each={stage.sprites}>
           {(sprite) => <SpriteComponent {...sprite} />}
         </For>
 
         <div
-          // @ts-expect-error
-          ref={playerRef}
           classList={{
             [css.sprite]: true,
             [css.player]: true,
-            [css["player-running"]]: inTransition(),
+            [css["player-running"]]: isMoving(),
+            [css["player-idle"]]: isIdle(),
           }}
           style={{
             "--row": player().row,
             "--col": player().col,
-            "--z-index": 1 + player().row,
+            "--z-index": 1 + Math.floor(player().row),
             "--sprite-row": -DIR_SPRITESHEET[player().dir],
           }}
         />
       </div>
     </div>
-  );
-}
-
-type Spriteable = {
-  sprite: string;
-};
-
-type GridParams = {
-  row: number;
-  col: number;
-  width: number;
-  height: number;
-};
-
-function SpriteComponent(sprite: Sprite) {
-  return (
-    <img
-      src={sprite.imageSrc}
-      class={clsx(css.sprite, sprite.classes)}
-      style={{
-        "object-position": sprite.imagePosition,
-        "grid-area": `${sprite.row} / ${sprite.col} / ${sprite.row + sprite.cellHeight} / ${sprite.col + sprite.cellWidth}`,
-        "--z-index": sprite.row,
-      }}
-    />
-  );
-}
-
-function TileComponent(
-  props: GridParams & Partial<Spriteable> & { className?: string },
-) {
-  return (
-    <div
-      class={clsx(css.tile, props.className)}
-      style={{
-        "background-image": props.sprite
-          ? `url("/${props.sprite}.png")`
-          : undefined,
-        "grid-area": `${props.row} / ${props.col} / ${props.row + props.height} / ${props.col + props.width}`,
-      }}
-    />
   );
 }

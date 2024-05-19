@@ -1,9 +1,13 @@
+import { JSXElement } from "solid-js";
+
 import { WORLD_UNIT_PX } from "./consts";
 
 export type Stage = {
   readonly worldUnit: number;
   readonly rows: number;
   readonly cols: number;
+  tiles: JSXElement;
+  sprites: Sprite[];
 };
 
 type WorldUnit = number;
@@ -69,4 +73,5 @@ export type Player = {
   row: number;
   col: number;
   dir: "up" | "right" | "down" | "left";
+  speed: number;
 };
