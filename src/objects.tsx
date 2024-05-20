@@ -15,16 +15,18 @@ type GridParams = {
   height: number;
 };
 
-export function SpriteComponent(sprite: Sprite) {
+export function SpriteComponent({ sprite }: { sprite: Sprite }) {
   return (
     <img
       src={sprite.imageSrc}
       class={clsx(css.sprite, sprite.classes)}
-      style={{
-        "object-position": sprite.imagePosition,
-        "grid-area": sprite.gridArea,
-        "--z-index": sprite.row,
-      }}
+      style={
+        sprite.subscribe() || {
+          "object-position": sprite.imagePosition,
+          "grid-area": sprite.gridArea,
+          "--z-index": sprite.row,
+        }
+      }
     />
   );
 }

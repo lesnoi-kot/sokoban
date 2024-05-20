@@ -1,6 +1,6 @@
 import { For, createMemo, createSignal, onCleanup, onMount } from "solid-js";
 
-import type { Player, Stage } from "./types";
+import { type Player, type Stage } from "./types";
 
 import css from "./styles.module.css";
 import { SpriteComponent } from "./objects";
@@ -35,10 +35,7 @@ export function StageComponent({ stage }: { stage: Stage }) {
   }
 
   function keyUp(event: KeyboardEvent) {
-    if (
-      // ["ArrowUp", "ArrowRight", "ArrowDown", "ArrowLeft"].includes(event.key)
-      keyPressed === event.key
-    ) {
+    if (keyPressed === event.key) {
       keyPressed = "";
     }
   }
@@ -57,9 +54,12 @@ export function StageComponent({ stage }: { stage: Stage }) {
     // Proccess possible player moves
     if (keyPressed) {
       const step = _player.speed * dt;
+      let dx = 0,
+        dy = 0;
 
       switch (keyPressed) {
         case "ArrowUp":
+          dy = -1;
           nextPosition.row = Math.max(
             -PLAYER_SIZE / 2,
             nextPosition.row - step,
@@ -67,6 +67,7 @@ export function StageComponent({ stage }: { stage: Stage }) {
           nextPosition.dir = "up";
           break;
         case "ArrowRight":
+          dx = 1;
           nextPosition.col = Math.min(
             stage.cols - 1 - PLAYER_SIZE / 2,
             nextPosition.col + step,
@@ -74,6 +75,7 @@ export function StageComponent({ stage }: { stage: Stage }) {
           nextPosition.dir = "right";
           break;
         case "ArrowDown":
+          dy = 1;
           nextPosition.row = Math.min(
             stage.rows - 1 - PLAYER_SIZE / 2,
             nextPosition.row + step,
@@ -81,6 +83,7 @@ export function StageComponent({ stage }: { stage: Stage }) {
           nextPosition.dir = "down";
           break;
         case "ArrowLeft":
+          dx = -1;
           nextPosition.col = Math.max(
             -PLAYER_SIZE / 2,
             nextPosition.col - step,
@@ -103,10 +106,23 @@ export function StageComponent({ stage }: { stage: Stage }) {
         0.5,
       );
 
+      const now = performance.now();
+
       for (const obj of stage.sprites) {
         if (hasOverlap(obj.getHitBox(), playerHitbox)) {
+          if (now - obj.pushedAt() >= 500) {
+            obj.moveBy(dy, dx);
+            obj.setUnpushed();
+            obj.notify();
+          } else {
+            obj.setPushed();
+          }
+
           stumbled = true;
+
           break;
+        } else {
+          obj.setUnpushed();
         }
       }
 
@@ -165,7 +181,7 @@ export function StageComponent({ stage }: { stage: Stage }) {
         {stage.tiles}
 
         <For each={stage.sprites}>
-          {(sprite) => <SpriteComponent {...sprite} />}
+          {(sprite) => <SpriteComponent sprite={sprite} />}
         </For>
 
         <div

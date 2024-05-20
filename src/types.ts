@@ -1,4 +1,5 @@
-import { JSXElement } from "solid-js";
+import { JSXElement, Signal } from "solid-js";
+import { createSignal } from "solid-js";
 
 import { WORLD_UNIT_PX } from "./consts";
 
@@ -19,7 +20,13 @@ export interface Collider {
   getHitBox(): DOMRectReadOnly;
 }
 
-export class Sprite implements Collider {
+export interface Pushable {
+  setUnpushed(): void;
+  setPushed(): void;
+  pushedAt(): number;
+}
+
+export class Sprite implements Collider, Pushable {
   sprite: string;
   spritePosition: [WorldUnit, WorldUnit] = [0, 0];
 
@@ -35,6 +42,10 @@ export class Sprite implements Collider {
   // @ts-expect-error
   private hitbox: DOMRectReadOnly;
 
+  private _pushedAt: number = Infinity;
+
+  private signal: Signal<undefined>;
+
   constructor(
     sprite: string,
     row: number = 0,
@@ -47,8 +58,17 @@ export class Sprite implements Collider {
     this.col = col;
     this.cellHeight = height;
     this.cellWidth = width;
-
+    this.signal = createSignal(undefined, { equals: false });
     this.calculateHitBox();
+  }
+
+  public subscribe(): false {
+    this.signal[0]();
+    return false;
+  }
+
+  public notify() {
+    this.signal[1]();
   }
 
   public withSpritePosition(x: WorldUnit, y: WorldUnit): Sprite {
@@ -59,6 +79,12 @@ export class Sprite implements Collider {
   public withClasses(classes: string): Sprite {
     this.classes = classes;
     return this;
+  }
+
+  public moveBy(rows: number, cols: number) {
+    this.row += rows;
+    this.col += cols;
+    this.calculateHitBox();
   }
 
   public get imageSrc(): string {
@@ -89,6 +115,20 @@ export class Sprite implements Collider {
 
   public getHitBox(): DOMRectReadOnly {
     return this.hitbox;
+  }
+
+  setPushed(): void {
+    if (!Number.isFinite(this._pushedAt)) {
+      this._pushedAt = performance.now();
+    }
+  }
+
+  setUnpushed(): void {
+    this._pushedAt = Infinity;
+  }
+
+  pushedAt(): number {
+    return this._pushedAt;
   }
 }
 
