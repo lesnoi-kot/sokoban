@@ -2,11 +2,12 @@
 
 import clsx from "clsx";
 
-import { TileComponent } from "../objects";
-import { Sprite, Stage } from "../types";
+import { Stage, Sprite, SolidSprite, MovableSprite } from "@/models";
+import { WORLD_UNIT_PX } from "@/models/consts";
+
+import { TileComponent } from "../views";
 
 import css from "../styles.module.css";
-import { WORLD_UNIT_PX } from "../consts";
 
 export const stage: Stage = {
   rows: 20,
@@ -25,7 +26,7 @@ export function LevelTiles(stage: Pick<Stage, "rows" | "cols">) {
         col={0}
         width={stage.cols}
         height={stage.rows}
-        className={css.transparent}
+        // className={css.transparent}
       />
       <TileComponent
         className={css.wall}
@@ -78,26 +79,26 @@ export function LevelTiles(stage: Pick<Stage, "rows" | "cols">) {
 
 export function buildObjects(): Sprite[] {
   return [
-    new Sprite("books1", 0, 0, 1, 2),
-    new Sprite("books1", 0, 2, 1, 2),
-    new Sprite("table1", 4, 3, 2, 2),
+    new SolidSprite("books1", 0, 0, 1, 2),
+    new SolidSprite("books1", 0, 2, 1, 2),
+    new SolidSprite("table1", 4, 3, 2, 2),
 
-    new Sprite("rock1", 0, 6, 2, 2),
-    new Sprite("cat_tower", 10, 2, 1, 2),
+    new SolidSprite("rock1", 0, 6, 2, 2),
+    new SolidSprite("cat_tower", 10, 2, 1, 2),
 
-    new Sprite("crafts", 6, 1)
+    new SolidSprite("crafts", 6, 1)
       .withSpritePosition(0, 0)
       .withClasses(css["sprite-32x64"]),
 
-    new Sprite("crafts", 6, 2)
+    new SolidSprite("crafts", 7, 2)
       .withSpritePosition(0, 0)
       .withClasses(css["sprite-32x64"]),
 
-    new Sprite("crafts", 1, 15)
+    new SolidSprite("crafts", 1, 15)
       .withSpritePosition(0, 0)
       .withClasses(css["sprite-32x64"]),
 
-    new Sprite("crafts", 10, 10, 1, 1)
+    new MovableSprite("crafts", 10, 10, 1, 1)
       .withSpritePosition(0, 0)
       .withClasses(css["sprite-32x64"]),
   ];

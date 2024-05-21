@@ -1,33 +1,29 @@
-import { For, createMemo, createSignal, onCleanup, onMount } from "solid-js";
+import {
+  For,
+  createEffect,
+  createMemo,
+  createSignal,
+  onCleanup,
+  onMount,
+} from "solid-js";
+import { createStore, produce } from "solid-js/store";
+import clsx from "clsx";
 
-import { type Player, type Stage } from "./types";
+import { Player, Stage, isCollider, Movable, isMovable } from "@/models";
+import { PlayerComponent, SpriteComponent } from "@/views";
 
 import css from "./styles.module.css";
-import { SpriteComponent } from "./objects";
-import { hasOverlap, scaleRect } from "./utils";
-
-const DIR_SPRITESHEET: Record<Player["dir"], number> = {
-  up: 2,
-  right: 1,
-  down: 0,
-  left: 3,
-};
-
-const PLAYER_SIZE = 1;
 
 export function StageComponent({ stage }: { stage: Stage }) {
-  // const pressedKeys: Record<string, boolean> = {};
   let lastTs = 0;
   let keyPressed: string = "";
+  let pushedObject: Movable | null = null;
+
   const [v, setV] = createSignal(0);
   const [idleDuration, setIdleDuration] = createSignal(0);
-
-  const [player, setPlayer] = createSignal<Player>({
-    row: Math.floor(stage.rows / 2) + 1,
-    col: Math.floor(stage.cols / 2) + 1,
-    dir: "down",
-    speed: 5,
-  });
+  const [player, setPlayer] = createStore<Player>(
+    new Player(Math.floor(stage.rows / 2) + 1, Math.floor(stage.cols / 2) + 1),
+  );
 
   function keyDown(event: KeyboardEvent) {
     event.preventDefault();
@@ -41,19 +37,21 @@ export function StageComponent({ stage }: { stage: Stage }) {
   }
 
   function tick(ts: DOMHighResTimeStamp) {
-    const _player = player();
+    const now = performance.now();
     const dt = (ts - lastTs) / 1000;
     lastTs = ts;
 
+    const startRow = player.row;
+    const startCol = player.col;
     const nextPosition = {
-      row: _player.row,
-      col: _player.col,
-      dir: _player.dir,
+      row: player.row,
+      col: player.col,
+      dir: player.dir,
     };
 
     // Proccess possible player moves
     if (keyPressed) {
-      const step = _player.speed * dt;
+      const step = player.speed * dt;
       let dx = 0,
         dy = 0;
 
@@ -61,7 +59,7 @@ export function StageComponent({ stage }: { stage: Stage }) {
         case "ArrowUp":
           dy = -1;
           nextPosition.row = Math.max(
-            -PLAYER_SIZE / 2,
+            -player.height / 2,
             nextPosition.row - step,
           );
           nextPosition.dir = "up";
@@ -69,7 +67,7 @@ export function StageComponent({ stage }: { stage: Stage }) {
         case "ArrowRight":
           dx = 1;
           nextPosition.col = Math.min(
-            stage.cols - 1 - PLAYER_SIZE / 2,
+            stage.cols - 1 - player.width / 2,
             nextPosition.col + step,
           );
           nextPosition.dir = "right";
@@ -77,7 +75,7 @@ export function StageComponent({ stage }: { stage: Stage }) {
         case "ArrowDown":
           dy = 1;
           nextPosition.row = Math.min(
-            stage.rows - 1 - PLAYER_SIZE / 2,
+            stage.rows - 1 - player.height / 2,
             nextPosition.row + step,
           );
           nextPosition.dir = "down";
@@ -85,7 +83,7 @@ export function StageComponent({ stage }: { stage: Stage }) {
         case "ArrowLeft":
           dx = -1;
           nextPosition.col = Math.max(
-            -PLAYER_SIZE / 2,
+            -player.width / 2,
             nextPosition.col - step,
           );
           nextPosition.dir = "left";
@@ -94,51 +92,47 @@ export function StageComponent({ stage }: { stage: Stage }) {
           break;
       }
 
-      let stumbled = false;
-
-      const playerHitbox = scaleRect(
-        new DOMRectReadOnly(
-          nextPosition.col,
-          nextPosition.row,
-          2 * PLAYER_SIZE,
-          2 * PLAYER_SIZE,
-        ),
-        0.5,
+      setPlayer(
+        produce((state) => {
+          state.row = nextPosition.row;
+          state.col = nextPosition.col;
+          state.dir = nextPosition.dir;
+        }),
       );
 
-      const now = performance.now();
-
+      let stumbled = false;
       for (const obj of stage.sprites) {
-        if (hasOverlap(obj.getHitBox(), playerHitbox)) {
-          if (now - obj.pushedAt() >= 500) {
-            obj.moveBy(dy, dx);
-            obj.setUnpushed();
-            obj.notify();
-          } else {
-            obj.setPushed();
-          }
-
+        if (isCollider(obj) && player.hitTest(obj)) {
+          setPlayer(
+            produce((state) => {
+              state.row = startRow;
+              state.col = startCol;
+            }),
+          );
           stumbled = true;
 
+          if (isMovable(obj)) {
+            if (now - obj.getPushedAt() >= 500) {
+              obj.moveBy(dy, dx);
+              obj.setUnpushed();
+              obj.notify();
+              pushedObject = null;
+            } else {
+              pushedObject = obj;
+              obj.setPushed();
+            }
+          }
+
           break;
-        } else {
-          obj.setUnpushed();
         }
       }
-
-      if (stumbled) {
-        nextPosition.row = _player.row;
-        nextPosition.col = _player.col;
-      }
-
-      setPlayer((state) => ({
-        ...state,
-        ...nextPosition,
-      }));
+    } else {
+      pushedObject?.setUnpushed();
+      pushedObject = null;
     }
 
     const movedDistance = Math.abs(
-      nextPosition.col - _player.col + (nextPosition.row - _player.row),
+      Math.abs(player.col - startCol) + Math.abs(player.row - startRow),
     );
     setV(movedDistance / dt);
     setIdleDuration((d) => (v() === 0 ? d + dt : 0));
@@ -164,12 +158,7 @@ export function StageComponent({ stage }: { stage: Stage }) {
   });
 
   return (
-    <div
-      classList={{
-        [css.stage]: true,
-        [css.crisp]: true,
-      }}
-    >
+    <div class={clsx(css.stage, css.crisp)}>
       <div
         class={css.field}
         style={{
@@ -184,19 +173,10 @@ export function StageComponent({ stage }: { stage: Stage }) {
           {(sprite) => <SpriteComponent sprite={sprite} />}
         </For>
 
-        <div
-          classList={{
-            [css.sprite]: true,
-            [css.player]: true,
-            [css["player-running"]]: isMoving(),
-            [css["player-idle"]]: isIdle(),
-          }}
-          style={{
-            "--row": player().row,
-            "--col": player().col,
-            "--z-index": 1 + Math.floor(player().row),
-            "--sprite-row": -DIR_SPRITESHEET[player().dir],
-          }}
+        <PlayerComponent
+          player={player}
+          isMoving={isMoving()}
+          isIdle={isIdle()}
         />
       </div>
     </div>
