@@ -109,6 +109,16 @@
   height: 64px;
 }
 
+.sprite-32x96 {
+  width: 32px;
+  height: 96px;
+}
+
+.sprite-64x96 {
+  width: 64px;
+  height: 96px;
+}
+
 @keyframes playerSpriteAnimationFrom1 {
   0% {
     --sprite-col: -1;

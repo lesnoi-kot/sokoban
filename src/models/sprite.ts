@@ -38,8 +38,8 @@ export class Sprite extends GameObject {
     this.signal[1]();
   }
 
-  public withSpritePosition(x: WorldUnit, y: WorldUnit): Sprite {
-    this.spritePosition = [x, y];
+  public withSpritePosition(row: WorldUnit, col: WorldUnit): Sprite {
+    this.spritePosition = [row, col];
     return this;
   }
 
@@ -57,8 +57,8 @@ export class Sprite extends GameObject {
       return undefined;
     }
 
-    const [x, y] = this.spritePosition;
-    return `${x * WORLD_UNIT_PX}px ${y * WORLD_UNIT_PX}px`;
+    const [row, col] = this.spritePosition;
+    return `${col * WORLD_UNIT_PX}px ${row * WORLD_UNIT_PX}px`;
   }
 
   public get gridArea(): string {

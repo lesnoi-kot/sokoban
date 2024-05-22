@@ -10,11 +10,11 @@ import { TileComponent } from "../views";
 import css from "../styles.module.css";
 
 export const stage: Stage = {
-  rows: 20,
-  cols: 20,
+  rows: 15,
+  cols: 17,
   worldUnit: WORLD_UNIT_PX,
   sprites: buildObjects(),
-  tiles: LevelTiles({ rows: 20, cols: 20 }),
+  tiles: LevelTiles({ rows: 15, cols: 17 }),
 };
 
 export function LevelTiles(stage: Pick<Stage, "rows" | "cols">) {
@@ -79,11 +79,26 @@ export function LevelTiles(stage: Pick<Stage, "rows" | "cols">) {
 
 export function buildObjects(): Sprite[] {
   return [
-    new SolidSprite("books1", 0, 0, 1, 2),
-    new SolidSprite("books1", 0, 2, 1, 2),
-    new SolidSprite("table1", 4, 3, 2, 2),
+    new SolidSprite("furn1", 0, 0, 1, 1)
+      .withSpritePosition(0, -17)
+      .withClasses(css["sprite-32x96"]),
 
-    new SolidSprite("rock1", 0, 6, 2, 2),
+    new SolidSprite("furn1", 0, 1, 1, 2)
+      .withSpritePosition(0, -3)
+      .withClasses(css["sprite-64x96"]),
+    new SolidSprite("furn1", 0, 3, 1, 2)
+      .withSpritePosition(0, -3)
+      .withClasses(css["sprite-64x96"]),
+    new SolidSprite("furn1", 0, 5, 1, 2)
+      .withSpritePosition(0, -3)
+      .withClasses(css["sprite-64x96"]),
+    new SolidSprite("furn1", 0, 7, 1, 1)
+      .withSpritePosition(0, -19)
+      .withClasses(css["sprite-32x64"]),
+
+    new SolidSprite("table1", 2, 3, 2, 2),
+
+    // new SolidSprite("rock1", 0, 6, 2, 2),
     new SolidSprite("cat_tower", 10, 2, 1, 2),
 
     new SolidSprite("crafts", 6, 1)
@@ -100,6 +115,29 @@ export function buildObjects(): Sprite[] {
 
     new MovableSprite("crafts", 10, 10, 1, 1)
       .withSpritePosition(0, 0)
+      .withClasses(css["sprite-32x64"]),
+
+    new SolidSprite("crafts", 0, 8, 1, 1)
+      .withSpritePosition(-2, -7)
+      .withClasses(css["sprite-32x64"]),
+    new SolidSprite("crafts", 0, 9, 1, 1)
+      .withSpritePosition(-2, -7)
+      .withClasses(css["sprite-32x64"]),
+    new SolidSprite("crafts", 0, 10, 1, 1)
+      .withSpritePosition(-2, -7)
+      .withClasses(css["sprite-32x64"]),
+    new SolidSprite("crafts", 0, 11, 1, 1)
+      .withSpritePosition(-2, -7)
+      .withClasses(css["sprite-32x64"]),
+    new SolidSprite("crafts", 0, 12, 1, 1)
+      .withSpritePosition(-2, -7)
+      .withClasses(css["sprite-32x64"]),
+
+    new SolidSprite("crafts", 0, 15, 1, 1)
+      .withSpritePosition(-2, -6)
+      .withClasses(css["sprite-32x64"]),
+    new SolidSprite("crafts", 0, 16, 1, 1)
+      .withSpritePosition(-2, -5)
       .withClasses(css["sprite-32x64"]),
   ];
 }

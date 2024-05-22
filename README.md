@@ -2,5 +2,6 @@
 
 ## TODO
 
-- push to free cell
+- walk around obstacles
 - push animation
+- camera
