@@ -103,7 +103,7 @@ export function StageComponent({ stage }: { stage: Stage }) {
       );
 
       let stumbled = false;
-      for (const obj of stage.sprites) {
+      for (const obj of stage.objects) {
         if (isCollider(obj) && player.hitTest(obj)) {
           stumbled = true;
 
@@ -117,7 +117,7 @@ export function StageComponent({ stage }: { stage: Stage }) {
               );
 
               if (
-                !stage.sprites.some((other) => {
+                !stage.objects.some((other) => {
                   if (other === obj) {
                     return false;
                   }
@@ -188,9 +188,9 @@ export function StageComponent({ stage }: { stage: Stage }) {
           "--cell-size": stage.worldUnit + "px",
         }}
       >
-        {stage.tiles}
+        <stage.StaticProps {...stage} />
 
-        <For each={stage.sprites}>
+        <For each={stage.objects}>
           {(sprite) => <SpriteComponent sprite={sprite} />}
         </For>
 

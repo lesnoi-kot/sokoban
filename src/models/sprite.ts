@@ -6,6 +6,7 @@ import { GameObject, WorldUnit } from "./base";
 import { WORLD_UNIT_PX } from "./consts";
 import { Collider, $isCollider, Movable, $isMovable } from "./interfaces";
 import { hasOverlap } from "@/utils";
+import clsx from "clsx";
 
 export class Sprite extends GameObject {
   sprite: string;
@@ -43,8 +44,8 @@ export class Sprite extends GameObject {
     return this;
   }
 
-  public withClasses(classes: string): Sprite {
-    this.classes = classes;
+  public withClasses(...classes: string[]): Sprite {
+    this.classes = clsx(...classes);
     return this;
   }
 

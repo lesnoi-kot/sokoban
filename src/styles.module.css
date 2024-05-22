@@ -109,6 +109,11 @@
   height: 64px;
 }
 
+.sprite-64x64 {
+  width: 64px;
+  height: 64px;
+}
+
 .sprite-32x96 {
   width: 32px;
   height: 96px;
@@ -117,6 +122,11 @@
 .sprite-64x96 {
   width: 64px;
   height: 96px;
+}
+
+.sprite-96x64 {
+  width: 96px;
+  height: 64px;
 }
 
 @keyframes playerSpriteAnimationFrom1 {

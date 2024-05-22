@@ -19,6 +19,18 @@ export class GameObject {
     this.width = width;
   }
 
+  public withPosition(row: number, col: number) {
+    this.row = row;
+    this.col = col;
+    return this;
+  }
+
+  public withSize(height: number, width: number) {
+    this.height = height;
+    this.width = width;
+    return this;
+  }
+
   public moveBy(rows: number, cols: number) {
     this.row += rows;
     this.col += cols;

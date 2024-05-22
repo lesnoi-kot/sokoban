@@ -23,3 +23,7 @@ body {
 img {
   display: block;
 }
+
+.flip-x {
+  scale: -1 1;
+}
