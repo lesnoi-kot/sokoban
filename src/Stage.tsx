@@ -11,16 +11,17 @@ import {
 import { createStore, produce } from "solid-js/store";
 import clsx from "clsx";
 
-import { Player, Stage, isCollider, Movable, isMovable } from "@/models";
-import { PlayerComponent, SpriteComponent } from "@/views";
+import { GameObject, MovableSprite, Player, Sprite, Stage, op } from "@/models";
+import { PlayerComponent } from "@/views";
 
 import css from "./styles.module.css";
-import { DummyCollider } from "./models/sprites";
+import { isMovable } from "./models/operators";
+import { BoxCollider } from "./models/colliders";
 
 export function StageComponent({ stage }: { stage: Stage }) {
   let lastTs = 0;
   let keyPressed: string = "";
-  let pushedObject: Movable | null = null;
+  let pushedObject: MovableSprite | null = null;
 
   const [computedPlayerSpeed, setComputedPlayerSpeed] = createSignal(0);
   const [idleDuration, setIdleDuration] = createSignal(0);
@@ -104,17 +105,17 @@ export function StageComponent({ stage }: { stage: Stage }) {
 
       let stumbled = false;
       for (const obj of stage.objects) {
-        if (isCollider(obj) && player.hitTest(obj)) {
+        if (op.hitTest(player, obj)) {
           stumbled = true;
 
           if (isMovable(obj)) {
             if (ts - obj.getPushedAt() >= 500) {
-              const dummy = new DummyCollider(
+              const dummy = new GameObject(
                 obj.row + dy,
                 obj.col + dx,
                 obj.height,
                 obj.width,
-              );
+              ).withFeatureClass(BoxCollider);
 
               if (
                 !stage.objects.some((other) => {
@@ -122,7 +123,7 @@ export function StageComponent({ stage }: { stage: Stage }) {
                     return false;
                   }
 
-                  return isCollider(other) && dummy.hitTest(other);
+                  return op.hitTest(dummy, other);
                 })
               ) {
                 obj.moveBy(dy, dx);
@@ -191,7 +192,12 @@ export function StageComponent({ stage }: { stage: Stage }) {
         <stage.StaticProps {...stage} />
 
         <For each={stage.objects}>
-          {(sprite) => <SpriteComponent sprite={sprite} />}
+          {(obj) => {
+            if (obj instanceof Sprite) {
+              return <Sprite.View sprite={obj} />;
+            }
+            return null;
+          }}
         </For>
 
         <PlayerComponent

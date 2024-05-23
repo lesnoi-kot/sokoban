@@ -2,7 +2,13 @@
 
 import clsx from "clsx";
 
-import { Stage, Sprite, SolidSprite, MovableSprite } from "@/models";
+import {
+  BoxCollider,
+  GameObject,
+  MovableSprite,
+  SolidSprite,
+  Stage,
+} from "@/models";
 import { WORLD_UNIT_PX } from "@/models/consts";
 
 import { TileComponent } from "../views";
@@ -31,6 +37,7 @@ function LevelTiles(stage: Pick<Stage, "rows" | "cols">) {
         col={0}
         width={colCenter}
         height={stage.rows}
+        className="transparent"
       />
       <TileComponent
         sprite="floor2"
@@ -38,6 +45,7 @@ function LevelTiles(stage: Pick<Stage, "rows" | "cols">) {
         col={colCenter}
         width={colCenter}
         height={stage.rows}
+        className="transparent"
       />
 
       <TileComponent
@@ -89,7 +97,7 @@ function LevelTiles(stage: Pick<Stage, "rows" | "cols">) {
   );
 }
 
-function buildObjects(): Sprite[] {
+function buildObjects(): GameObject[] {
   return [
     new SolidSprite("furn1", 0, 0, 1, 1)
       .withSpritePosition(0, -17)
@@ -139,10 +147,11 @@ function buildObjects(): Sprite[] {
 
     new MovableSprite("crafts", 10, 10, 1, 1)
       .withSpritePosition(0, 0)
-      .withClasses(css["sprite-32x64"]),
+      .withClasses(css["sprite-32x64"])
+      .withFeatureClass(BoxCollider),
 
     ...new EditorBrush(0, 8, preservesJar).addRight(5).commit(),
-    ...new EditorBrush(5, 11, keg).addRight(6).commit(),
+    ...new EditorBrush(5, 11, keg).addRight(6).commit(true),
 
     new SolidSprite("crafts", 0, 15, 1, 1)
       .withSpritePosition(-2, -6)

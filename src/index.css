@@ -27,3 +27,7 @@ img {
 .flip-x {
   scale: -1 1;
 }
+
+.transparent {
+  opacity: 0.5;
+}

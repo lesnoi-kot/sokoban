@@ -1,23 +1,21 @@
 export type WorldUnit = number;
 export type GridUnit = number;
 
+export abstract class Feature {
+  constructor(public active: boolean = true) {}
+  public process(ts: DOMHighResTimeStamp): void {}
+}
+
 export class GameObject {
-  row: GridUnit;
-  col: GridUnit;
-  width: GridUnit;
-  height: GridUnit;
+  [key: symbol]: boolean | undefined;
 
   constructor(
-    row: number = 0,
-    col: number = 0,
-    height: number = 1,
-    width: number = 1,
-  ) {
-    this.row = row;
-    this.col = col;
-    this.height = height;
-    this.width = width;
-  }
+    public row: GridUnit = 0,
+    public col: GridUnit = 0,
+    public height: GridUnit = 1,
+    public width: GridUnit = 1,
+    public features: Feature[] = [],
+  ) {}
 
   public withPosition(row: number, col: number) {
     this.row = row;
@@ -34,6 +32,47 @@ export class GameObject {
   public moveBy(rows: number, cols: number) {
     this.row += rows;
     this.col += cols;
+  }
+
+  public getFeature<T extends Feature>(
+    FeatureClass: abstract new (...args: any[]) => T,
+  ): T | null {
+    for (const feature of this.features) {
+      if (feature instanceof FeatureClass) {
+        return feature;
+      }
+    }
+    return null;
+  }
+
+  public withFeature(feature: Feature) {
+    this.features.push(feature);
+    return this;
+  }
+
+  public withFeatureClass(FeatureClass: new (obj: GameObject) => Feature) {
+    this.features.push(new FeatureClass(this));
+    return this;
+  }
+
+  public get top(): number {
+    return this.row;
+  }
+  public get left(): number {
+    return this.col;
+  }
+  public get right(): number {
+    return this.col + this.width;
+  }
+  public get bottom(): number {
+    return this.row + this.height;
+  }
+
+  public get x(): number {
+    return this.col;
+  }
+  public get y(): number {
+    return this.row;
   }
 
   public get area(): number {

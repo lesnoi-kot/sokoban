@@ -1,12 +1,12 @@
 import { Component, Signal, createSignal } from "solid-js";
+import clsx from "clsx";
 
 import { SpriteComponent } from "@/views";
 
+import { Movable, $isMovable } from "./features";
 import { GameObject, WorldUnit } from "./base";
+import { BoxCollider } from "./colliders";
 import { WORLD_UNIT_PX } from "./consts";
-import { Collider, $isCollider, Movable, $isMovable } from "./interfaces";
-import { hasOverlap } from "@/utils";
-import clsx from "clsx";
 
 export class Sprite extends GameObject {
   sprite: string;
@@ -67,37 +67,10 @@ export class Sprite extends GameObject {
   }
 }
 
-export class SolidSprite extends Sprite implements Collider {
-  [$isCollider]: true = true;
-
-  // @ts-expect-error
-  private hitbox: DOMRectReadOnly;
-
+export class SolidSprite extends Sprite {
   constructor(...args: ConstructorParameters<typeof Sprite>) {
     super(...args);
-    this.calculateHitBox();
-  }
-
-  hitTest(other: Collider): boolean {
-    return hasOverlap(this.getHitBox(), other.getHitBox());
-  }
-
-  protected calculateHitBox(): void {
-    this.hitbox = new DOMRectReadOnly(
-      this.col,
-      this.row,
-      this.width,
-      this.height,
-    );
-  }
-
-  public getHitBox(): DOMRectReadOnly {
-    return this.hitbox;
-  }
-
-  public moveBy(rows: number, cols: number): void {
-    super.moveBy(rows, cols);
-    this.calculateHitBox();
+    this.withFeatureClass(BoxCollider);
   }
 }
 

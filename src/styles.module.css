@@ -55,10 +55,6 @@
   object-position: top left;
 }
 
-.transparent {
-  opacity: 0.5;
-}
-
 .wall {
   background-image: url("/ceil1.png"), url("/wall3.png");
   background-repeat: repeat-x;
