@@ -1,6 +1,6 @@
 import { flip } from "lodash";
 
-import { distance } from "@/lib/geometry";
+import { distancePoint } from "@/lib/geometry";
 
 import { GameObject, Feature } from "./base";
 
@@ -9,34 +9,70 @@ enum ColliderType {
   circle,
 }
 
+export const ORIGIN_CENTER = new DOMPointReadOnly(0.5, 0.5);
+export const ORIGIN_TOP_LEFT = new DOMPointReadOnly(0, 0);
+
 export abstract class Collider extends Feature {
   static $isCollider = Symbol("Collider");
 
   constructor(
     public readonly obj: GameObject,
     public readonly type: ColliderType,
+    protected origin: DOMPoint,
   ) {
     super();
     obj[Collider.$isCollider] = true;
   }
 
   public hitTest(other: Collider): boolean {
-    return hitTestResolver[this.type][other.type](this.obj, other.obj);
+    return hitTestResolver[this.type][other.type](this, other);
   }
 }
 
 export class BoxCollider extends Collider {
-  constructor(obj: GameObject) {
-    super(obj, ColliderType.box);
+  constructor(
+    obj: GameObject,
+    public offset: DOMPoint = DOMPoint.fromPoint(ORIGIN_TOP_LEFT),
+    public height: number = obj.height,
+    public width: number = obj.width,
+  ) {
+    super(obj, ColliderType.box, DOMPoint.fromPoint(ORIGIN_TOP_LEFT));
+  }
+
+  public get top(): number {
+    return this.obj.top + this.offset.y;
+  }
+  public get left(): number {
+    return this.obj.left + this.offset.x;
+  }
+  public get right(): number {
+    return this.left + this.width;
+  }
+  public get bottom(): number {
+    return this.top + this.height;
   }
 }
 
 export class CircleCollider extends Collider {
-  constructor(obj: GameObject) {
-    super(obj, ColliderType.circle);
+  constructor(
+    obj: GameObject,
+    origin: DOMPoint = DOMPoint.fromPoint(ORIGIN_CENTER),
+    public radius: number = obj.width / 2,
+  ) {
+    super(obj, ColliderType.circle, origin);
+  }
+
+  public getCenter(): DOMPointReadOnly {
+    return new DOMPointReadOnly(
+      this.obj.col + this.obj.width * this.origin.x,
+      this.obj.row + this.obj.height * this.origin.y,
+    );
   }
 }
 
+/*
+  Hit test resolvers
+*/
 const hitTestResolver = {
   [ColliderType.box]: {
     [ColliderType.box]: boxBoxHitTest,
@@ -48,41 +84,33 @@ const hitTestResolver = {
   },
 } as const;
 
-function boxBoxHitTest(obj1: GameObject, obj2: GameObject): boolean {
-  if (obj1.right <= obj2.left || obj2.right <= obj1.left) {
+function boxBoxHitTest(b1: BoxCollider, b2: BoxCollider): boolean {
+  if (b1.right <= b2.left || b2.right <= b1.left) {
     return false;
   }
-  if (obj1.bottom <= obj2.top || obj2.bottom <= obj1.top) {
+  if (b1.bottom <= b2.top || b2.bottom <= b1.top) {
     return false;
   }
   return true;
 }
 
-function boxCircleHitTest(box: GameObject, circle: GameObject): boolean {
-  const circleRadius = circle.width / 2;
-  const circleCenterX = circle.col + circleRadius;
-  const circleCenterY = circle.row + circleRadius;
-  const closestX = Math.max(box.left, Math.min(circleCenterX, box.right));
-  const closestY = Math.max(box.top, Math.min(circleCenterY, box.bottom));
-  const distanceToClosestPoint = distance(
-    circleCenterX,
-    circleCenterY,
-    closestX,
-    closestY,
-  );
-  return distanceToClosestPoint <= circleRadius;
+function boxCircleHitTest(box: BoxCollider, circle: CircleCollider): boolean {
+  const circleCenter = circle.getCenter();
+  const closest = {
+    x: Math.max(box.obj.left, Math.min(circleCenter.x, box.obj.right)),
+    y: Math.max(box.obj.top, Math.min(circleCenter.y, box.obj.bottom)),
+  };
+  const distanceToClosestPoint = distancePoint(circleCenter, closest);
+  return distanceToClosestPoint <= circle.radius;
 }
 
 function circleCircleHitTest(
-  circle1: GameObject,
-  circle2: GameObject,
+  circle1: CircleCollider,
+  circle2: CircleCollider,
 ): boolean {
-  const radius1 = circle1.width / 2;
-  const centerX1 = circle1.col + radius1;
-  const centerY1 = circle1.row + radius1;
-  const radius2 = circle2.width / 2;
-  const centerX2 = circle2.col + radius2;
-  const centerY2 = circle2.row + radius2;
-  const centerDistance = distance(centerX1, centerY1, centerX2, centerY2);
-  return centerDistance <= radius1 + radius2;
+  const centerDistance = distancePoint(
+    circle1.getCenter(),
+    circle2.getCenter(),
+  );
+  return centerDistance <= circle1.radius + circle2.radius;
 }
