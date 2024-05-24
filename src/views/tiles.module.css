@@ -1,0 +1,69 @@
+.tile {
+  z-index: var(--layer-tile);
+  background-image: var(--tile-sprite-url, unset);
+  background-repeat: repeat;
+  background-position: calc(var(--cell-size) * var(--tile-sprite-x, 0))
+    calc(var(--cell-size) * var(--tile-sprite-y, 0));
+}
+
+.wall {
+  background-image: url("/ceil1.png"), url("/wall3.png");
+  background-repeat: repeat-x;
+  background-position: top, bottom;
+  margin-top: -110px;
+  background-position:
+    0px 0px,
+    0px 20px;
+}
+
+.wall-top-corner {
+  background-image: url("/ceil_top_left_1.png"), url("/ceil_left_1.png");
+  background-repeat: no-repeat, repeat-y;
+  margin-left: -20px;
+  margin-bottom: 16px;
+  margin-top: -110px;
+  z-index: var(--z-index-overlay);
+}
+
+.wall-flip {
+  scale: -1 1;
+  margin-left: 0;
+  margin-right: -20px;
+}
+
+.wall-bottom-corner {
+  background-image: url("/ceil_bottom_left_1.png");
+  background-repeat: no-repeat;
+  background-position-y: bottom;
+  background-position-x: left;
+  margin-left: -20px;
+  z-index: var(--z-index-overlay);
+}
+
+.wall-bottom {
+  background-image: url("/ceil2.png"),
+    repeating-linear-gradient(
+      180deg,
+      transparent 0px,
+      transparent 20px,
+      var(--void-bg) 20px,
+      var(--void-bg) 48px
+    );
+  background-repeat: repeat-x;
+  background-position-y: top;
+  background-position-x: calc(var(--cell-size) / 2), 0;
+  margin: 0 -20px 0 -20px;
+  z-index: var(--z-index-overlay);
+  margin-bottom: 0;
+  height: 64px;
+  margin-top: 12px;
+}
+
+.carpet1 {
+  --tile-sprite-url: url("/carpets_windows_1.png");
+  --tile-sprite-x: -4;
+}
+.carpet2 {
+  --tile-sprite-url: url("/carpets_windows_1.png");
+  --tile-sprite-x: -14;
+}

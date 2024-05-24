@@ -1,0 +1,72 @@
+@keyframes playerSpriteAnimationFrom1 {
+  0% {
+    --sprite-col: -1;
+  }
+  25% {
+    --sprite-col: -2;
+  }
+  50% {
+    --sprite-col: -3;
+  }
+  75% {
+    --sprite-col: -4;
+  }
+}
+
+@keyframes playerSpriteAnimationIdle {
+  0% {
+    --sprite-col: 0;
+  }
+  25% {
+    --sprite-col: -1;
+  }
+  50% {
+    --sprite-col: -2;
+  }
+  75% {
+    --sprite-col: -3;
+  }
+  100% {
+    --sprite-col: -2;
+  }
+}
+
+.player {
+  --player-size: 64px;
+  --sprite-col: 0;
+  --sprite-row: 0;
+
+  width: var(--player-size);
+  aspect-ratio: 1 / 1;
+  background-color: rgb(46 139 87 / 0.5);
+
+  grid-area: 1 / 1 / 3 / 3;
+  background-repeat: repeat;
+  /* align-self: center; */
+
+  --player-offset: 0px;
+
+  translate: calc(var(--col, 0) * var(--cell-size) - var(--player-offset))
+    calc(var(--row, 0) * var(--cell-size) - var(--player-offset));
+
+  background-image: url("/cat64.png");
+  background-position: calc(var(--sprite-col, 0) * var(--player-size))
+    calc(var(--sprite-row, 0) * var(--player-size) - 10px);
+}
+
+.player-running {
+  --cell-speed: 400ms;
+  animation: playerSpriteAnimationFrom1;
+  animation-duration: var(--cell-speed);
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.player-idle {
+  animation: playerSpriteAnimationIdle;
+  --sprite-row: -4 !important;
+  animation-duration: 1000ms;
+  animation-timing-function: linear;
+  animation-iteration-count: 1;
+  animation-fill-mode: forwards;
+}

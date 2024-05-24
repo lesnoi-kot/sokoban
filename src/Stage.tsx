@@ -1,27 +1,26 @@
 /* @refresh reload */
 
-import {
-  For,
-  createEffect,
-  createMemo,
-  createSignal,
-  onCleanup,
-  onMount,
-} from "solid-js";
+import { For, createMemo, createSignal, onCleanup, onMount } from "solid-js";
 import { createStore, produce } from "solid-js/store";
 import clsx from "clsx";
 
-import { GameObject, MovableSprite, Player, Sprite, Stage, op } from "@/models";
-import { PlayerComponent } from "@/views";
+import {
+  BoxCollider,
+  GameObject,
+  Player,
+  Renderable,
+  Stage,
+  op,
+} from "@/models";
+import { PlayerComponent } from "@/views/Player";
+import { Movable } from "@/models/movable";
 
 import css from "./styles.module.css";
-import { isMovable } from "./models/operators";
-import { BoxCollider } from "./models/colliders";
 
 export function StageComponent({ stage }: { stage: Stage }) {
   let lastTs = 0;
   let keyPressed: string = "";
-  let pushedObject: MovableSprite | null = null;
+  let pushedObject: GameObject | null = null;
 
   const [computedPlayerSpeed, setComputedPlayerSpeed] = createSignal(0);
   const [idleDuration, setIdleDuration] = createSignal(0);
@@ -30,7 +29,6 @@ export function StageComponent({ stage }: { stage: Stage }) {
   );
 
   function keyDown(event: KeyboardEvent) {
-    event.preventDefault();
     keyPressed = event.key;
   }
 
@@ -61,34 +59,22 @@ export function StageComponent({ stage }: { stage: Stage }) {
       switch (keyPressed) {
         case "ArrowUp":
           dy = -1;
-          nextPosition.row = Math.max(
-            -player.height / 2,
-            nextPosition.row - step,
-          );
+          nextPosition.row = nextPosition.row - step;
           nextPosition.dir = "up";
           break;
         case "ArrowRight":
           dx = 1;
-          nextPosition.col = Math.min(
-            stage.cols - 1 - player.width / 2,
-            nextPosition.col + step,
-          );
+          nextPosition.col = nextPosition.col + step;
           nextPosition.dir = "right";
           break;
         case "ArrowDown":
           dy = 1;
-          nextPosition.row = Math.min(
-            stage.rows - 1 - player.height / 2,
-            nextPosition.row + step,
-          );
+          nextPosition.row = nextPosition.row + step;
           nextPosition.dir = "down";
           break;
         case "ArrowLeft":
           dx = -1;
-          nextPosition.col = Math.max(
-            -player.width / 2,
-            nextPosition.col - step,
-          );
+          nextPosition.col = nextPosition.col - step;
           nextPosition.dir = "left";
           break;
         default:
@@ -108,8 +94,8 @@ export function StageComponent({ stage }: { stage: Stage }) {
         if (op.hitTest(player, obj)) {
           stumbled = true;
 
-          if (isMovable(obj)) {
-            if (ts - obj.getPushedAt() >= 500) {
+          if (op.isMovable(obj)) {
+            if (ts - obj.getFeature(Movable).getPushedAt() >= 500) {
               const dummy = new GameObject(
                 obj.row + dy,
                 obj.col + dx,
@@ -127,14 +113,16 @@ export function StageComponent({ stage }: { stage: Stage }) {
                 })
               ) {
                 obj.moveBy(dy, dx);
-                obj.setUnpushed();
-                obj.notify();
+                obj.getFeature(Movable).setUnpushed();
+                if (obj instanceof Renderable) {
+                  obj.notify();
+                }
                 pushedObject = null;
                 break;
               }
             } else {
               pushedObject = obj;
-              obj.setPushed();
+              obj.getFeature(Movable).setPushed(ts);
             }
           }
         }
@@ -149,7 +137,7 @@ export function StageComponent({ stage }: { stage: Stage }) {
         );
       }
     } else {
-      pushedObject?.setUnpushed();
+      pushedObject?.getFeature(Movable)?.setUnpushed();
       pushedObject = null;
     }
 
@@ -193,8 +181,8 @@ export function StageComponent({ stage }: { stage: Stage }) {
 
         <For each={stage.objects}>
           {(obj) => {
-            if (obj instanceof Sprite) {
-              return <Sprite.View sprite={obj} />;
+            if (obj instanceof Renderable) {
+              return <obj.View sprite={obj} />;
             }
             return null;
           }}

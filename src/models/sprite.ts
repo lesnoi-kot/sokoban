@@ -1,33 +1,19 @@
-import { Component, Signal, createSignal } from "solid-js";
+import { Component, createSignal } from "solid-js";
 import clsx from "clsx";
 
-import { SpriteComponent } from "@/views";
+import { SpriteComponent, SpriteGroupComponent } from "@/views";
 
-import { Movable, $isMovable } from "./features";
 import { GameObject, WorldUnit } from "./base";
 import { BoxCollider } from "./colliders";
 import { WORLD_UNIT_PX } from "./consts";
 
-export class Sprite extends GameObject {
-  sprite: string;
-  spritePosition: [WorldUnit, WorldUnit] = [0, 0];
-  offsetX: WorldUnit = 0;
-  offsetY: WorldUnit = 0;
-  classes: string | undefined;
+export abstract class Renderable extends GameObject {
+  abstract get View(): Component<{ sprite: any }>;
 
-  static View: Component<{ sprite: Sprite }> = SpriteComponent;
-  private signal: Signal<undefined>;
+  protected signal = createSignal(undefined, { equals: false });
 
-  constructor(
-    sprite: string,
-    row: number = 0,
-    col: number = 0,
-    height: number = 1,
-    width: number = 1,
-  ) {
-    super(row, col, height, width);
-    this.sprite = sprite;
-    this.signal = createSignal(undefined, { equals: false });
+  constructor(...args: ConstructorParameters<typeof GameObject>) {
+    super(...args);
   }
 
   public subscribe(): false {
@@ -39,6 +25,27 @@ export class Sprite extends GameObject {
     this.signal[1]();
   }
 
+  get zIndex() {
+    return this.parent?.row ?? this.row;
+  }
+}
+
+export class Sprite extends Renderable {
+  get View(): Component<{ sprite: Sprite }> {
+    return SpriteComponent;
+  }
+
+  spritePosition: [WorldUnit, WorldUnit] = [0, 0];
+  offset: [WorldUnit, WorldUnit] = [0, 0];
+  classes: string | undefined;
+
+  constructor(
+    public sprite: string,
+    ...args: ConstructorParameters<typeof Renderable>
+  ) {
+    super(...args);
+  }
+
   public withSpritePosition(row: WorldUnit, col: WorldUnit): Sprite {
     this.spritePosition = [row, col];
     return this;
@@ -46,6 +53,11 @@ export class Sprite extends GameObject {
 
   public withClasses(...classes: string[]): Sprite {
     this.classes = clsx(...classes);
+    return this;
+  }
+
+  public withOffset(rowOffset: WorldUnit, colOffset: WorldUnit): Sprite {
+    this.offset = [rowOffset, colOffset];
     return this;
   }
 
@@ -61,10 +73,6 @@ export class Sprite extends GameObject {
     const [row, col] = this.spritePosition;
     return `${col * WORLD_UNIT_PX}px ${row * WORLD_UNIT_PX}px`;
   }
-
-  public get gridArea(): string {
-    return `${this.row + 1} / ${this.col + 1} / ${this.row + this.height + 1} / ${this.col + this.width + 1}`;
-  }
 }
 
 export class SolidSprite extends Sprite {
@@ -74,24 +82,29 @@ export class SolidSprite extends Sprite {
   }
 }
 
-export class MovableSprite extends SolidSprite implements Movable {
-  [$isMovable]: true = true;
-  weight: number = 1;
-  private pushedAt: number = Infinity;
+export class SpriteGroup extends Renderable {
+  get View(): Component<{ sprite: SpriteGroup }> {
+    return SpriteGroupComponent;
+  }
 
-  setPushed(): void {
-    if (!Number.isFinite(this.pushedAt)) {
-      this.pushedAt = performance.now();
+  constructor(
+    public sprites: Renderable[],
+    ...args: ConstructorParameters<typeof Renderable>
+  ) {
+    super(...args);
+    for (const sprite of sprites) {
+      sprite.parent = this;
     }
   }
 
-  setUnpushed(): void {
-    this.pushedAt = Infinity;
+  public moveBy(rows: number, cols: number): void {
+    super.moveBy(rows, cols);
   }
 
-  getPushedAt(): number {
-    return this.pushedAt;
+  public notify(): void {
+    super.notify();
+    for (const sprite of this.sprites) {
+      sprite.notify();
+    }
   }
 }
-
-// export class SpriteGroup extends Sprite {}

@@ -1,14 +1,15 @@
-import { MovableSprite } from ".";
 import { GameObject } from "./base";
 import { Collider } from "./colliders";
-import { $isMovable } from "./features";
+import { Movable } from "./movable";
 
-function isCollider(obj: any) {
-  return obj?.[Collider.$isCollider] === true;
+function isCollider(obj: any): boolean {
+  return obj?.[Collider.$isCollider];
 }
 
-export function isMovable(obj: any): obj is MovableSprite {
-  return obj?.[$isMovable] === true;
+export function isMovable(obj: any): obj is {
+  getFeature(FeatureClass: typeof Movable): Movable;
+} {
+  return obj?.[Movable.$isMovable];
 }
 
 export function hitTest(obj1: GameObject, obj2: GameObject): boolean {

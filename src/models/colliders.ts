@@ -25,6 +25,7 @@ export abstract class Collider extends Feature {
   }
 
   public hitTest(other: Collider): boolean {
+    // @ts-ignore
     return hitTestResolver[this.type][other.type](this, other);
   }
 }
@@ -56,8 +57,8 @@ export class BoxCollider extends Collider {
 export class CircleCollider extends Collider {
   constructor(
     obj: GameObject,
-    origin: DOMPoint = DOMPoint.fromPoint(ORIGIN_CENTER),
     public radius: number = obj.width / 2,
+    origin: DOMPoint = DOMPoint.fromPoint(ORIGIN_CENTER),
   ) {
     super(obj, ColliderType.circle, origin);
   }

@@ -8,6 +8,7 @@ export abstract class Feature {
 
 export class GameObject {
   [key: symbol]: boolean | undefined;
+  parent: GameObject | null = null;
 
   constructor(
     public row: GridUnit = 0,
@@ -77,6 +78,10 @@ export class GameObject {
 
   public get area(): number {
     return this.height * this.width;
+  }
+
+  public get gridArea(): string {
+    return `${this.row + (this.parent?.row ?? 0) + 1} / ${this.col + (this.parent?.col ?? 0) + 1} / ${this.row + (this.parent?.row ?? 0) + this.height + 1} / ${this.col + (this.parent?.col ?? 0) + this.width + 1}`;
   }
 
   public isCellInside(row: number, col: number): boolean {
