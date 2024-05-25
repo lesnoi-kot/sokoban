@@ -16,11 +16,11 @@ export abstract class Collider extends Feature {
   static $isCollider = Symbol("Collider");
 
   constructor(
-    public readonly obj: GameObject,
+    obj: GameObject,
     public readonly type: ColliderType,
     protected origin: DOMPoint,
   ) {
-    super();
+    super(obj);
     obj[Collider.$isCollider] = true;
   }
 

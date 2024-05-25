@@ -1,14 +1,19 @@
+import type { FrameInfo } from "./runner";
+
 export type WorldUnit = number;
 export type GridUnit = number;
 
 export abstract class Feature {
-  constructor(public active: boolean = true) {}
-  public process(ts: DOMHighResTimeStamp): void {}
+  constructor(
+    public obj: GameObject,
+    public active: boolean = true,
+  ) {}
 }
 
 export class GameObject {
   [key: symbol]: boolean | undefined;
   parent: GameObject | null = null;
+  tag: string = "";
 
   constructor(
     public row: GridUnit = 0,
@@ -83,6 +88,8 @@ export class GameObject {
   public get gridArea(): string {
     return `${this.row + (this.parent?.row ?? 0) + 1} / ${this.col + (this.parent?.col ?? 0) + 1} / ${this.row + (this.parent?.row ?? 0) + this.height + 1} / ${this.col + (this.parent?.col ?? 0) + this.width + 1}`;
   }
+
+  public update(frame: FrameInfo): void {}
 
   public isCellInside(row: number, col: number): boolean {
     return (

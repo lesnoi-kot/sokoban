@@ -6,8 +6,8 @@ export class Movable extends Feature {
   weight: number = 1;
   private pushedAt: number = Infinity;
 
-  constructor(public readonly obj: GameObject) {
-    super();
+  constructor(obj: GameObject) {
+    super(obj);
     obj[Movable.$isMovable] = true;
   }
 
