@@ -2,7 +2,9 @@ import { GameObject } from "./base";
 import { Collider } from "./colliders";
 import { Movable } from "./movable";
 
-function isCollider(obj: any): boolean {
+export function isCollider(obj: any): obj is {
+  getFeature(FeatureClass: typeof Collider): Collider;
+} {
   return obj?.[Collider.$isCollider];
 }
 

@@ -5,6 +5,7 @@ import clsx from "clsx";
 import {
   BoxCollider,
   GameObject,
+  Player,
   SolidSprite,
   Sprite,
   SpriteGroup,
@@ -124,6 +125,8 @@ function LevelTiles(stage: Pick<Stage, "rows" | "cols">) {
 
 function buildObjects(height: number, width: number): GameObject[] {
   return [
+    new Player(Math.floor(height / 2) + 1, Math.floor(width / 2) + 1),
+
     new GameObject(-1, -1, 1, width + 1).withFeatureClass(BoxCollider),
     new GameObject(-1, -1, height + 1, 1).withFeatureClass(BoxCollider),
     new GameObject(-1, width, height + 1, 1).withFeatureClass(BoxCollider),

@@ -3,6 +3,7 @@ import { Stage } from "../stage";
 export type FrameInfo = {
   readonly ts: DOMHighResTimeStamp;
   readonly delta: DOMHighResTimeStamp;
+  notifications: Array<() => void>;
 };
 
 export class Runner {
@@ -36,12 +37,16 @@ export class Runner {
     const frame: FrameInfo = {
       ts,
       delta: (ts - this.lastTs) / 1000,
+      notifications: [],
     };
     for (const obj of this.stage.objects) {
       obj.update(frame);
     }
     for (const p of this.processors) {
       p.process(frame);
+    }
+    for (const notify of frame.notifications) {
+      notify();
     }
     this.rafId = window.requestAnimationFrame(this.loop.bind(this));
     this.lastTs = ts;

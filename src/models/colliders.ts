@@ -2,7 +2,7 @@ import { flip } from "lodash";
 
 import { distancePoint } from "@/lib/geometry";
 
-import { GameObject, Feature } from "./base";
+import { GameObject, Feature, Vector } from "./base";
 
 enum ColliderType {
   box,
@@ -15,6 +15,8 @@ export const ORIGIN_TOP_LEFT = new DOMPointReadOnly(0, 0);
 export abstract class Collider extends Feature {
   static $isCollider = Symbol("Collider");
 
+  static: boolean = true;
+
   constructor(
     obj: GameObject,
     public readonly type: ColliderType,
@@ -25,9 +27,17 @@ export abstract class Collider extends Feature {
   }
 
   public hitTest(other: Collider): boolean {
+    if (this.disabled || other.disabled) {
+      return false;
+    }
     // @ts-ignore
     return hitTestResolver[this.type][other.type](this, other);
   }
+
+  public abstract get top(): number;
+  public abstract get left(): number;
+  public abstract get right(): number;
+  public abstract get bottom(): number;
 }
 
 export class BoxCollider extends Collider {
@@ -63,11 +73,24 @@ export class CircleCollider extends Collider {
     super(obj, ColliderType.circle, origin);
   }
 
-  public getCenter(): DOMPointReadOnly {
-    return new DOMPointReadOnly(
+  public getCenter(): Vector {
+    return new Vector(
       this.obj.col + this.obj.width * this.origin.x,
       this.obj.row + this.obj.height * this.origin.y,
     );
+  }
+
+  public get top(): number {
+    return this.getCenter().row - this.radius;
+  }
+  public get left(): number {
+    return this.getCenter().col - this.radius;
+  }
+  public get right(): number {
+    return this.getCenter().col + this.radius;
+  }
+  public get bottom(): number {
+    return this.getCenter().row + this.radius;
   }
 }
 
@@ -86,10 +109,10 @@ const hitTestResolver = {
 } as const;
 
 function boxBoxHitTest(b1: BoxCollider, b2: BoxCollider): boolean {
-  if (b1.right <= b2.left || b2.right <= b1.left) {
+  if (b1.right < b2.left || b2.right < b1.left) {
     return false;
   }
-  if (b1.bottom <= b2.top || b2.bottom <= b1.top) {
+  if (b1.bottom < b2.top || b2.bottom < b1.top) {
     return false;
   }
   return true;

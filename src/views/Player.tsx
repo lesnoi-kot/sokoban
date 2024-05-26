@@ -9,26 +9,24 @@ const DIR_SPRITESHEET: Record<Player["dir"], number> = {
   left: 3,
 };
 
-export function PlayerComponent(props: {
-  player: Player;
-  isMoving: boolean;
-  isIdle: boolean;
-}) {
-  // const pressedKeys: Record<string, boolean> = {};
+export function PlayerComponent(props: { sprite: Player }) {
   return (
     <div
       classList={{
         [css.sprite]: true,
         [css.player]: true,
-        [css["player-running"]]: props.isMoving,
-        [css["player-idle"]]: props.isIdle,
+        [css["player-running"]]:
+          props.sprite.subscribe() || props.sprite.isMoving,
+        [css["player-idle"]]: props.sprite.subscribe() || props.sprite.isIdle,
       }}
-      style={{
-        "--row": props.player.row,
-        "--col": props.player.col,
-        "--z-index": 1 + Math.floor(props.player.row),
-        "--sprite-row": -DIR_SPRITESHEET[props.player.dir],
-      }}
+      style={
+        props.sprite.subscribe() || {
+          "--row": props.sprite.row,
+          "--col": props.sprite.col,
+          "--z-index": 1 + Math.floor(props.sprite.row),
+          "--sprite-row": -DIR_SPRITESHEET[props.sprite.dir],
+        }
+      }
     />
   );
 }

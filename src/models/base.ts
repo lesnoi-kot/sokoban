@@ -3,11 +3,30 @@ import type { FrameInfo } from "./runner";
 export type WorldUnit = number;
 export type GridUnit = number;
 
+export class Vector {
+  constructor(
+    public row: number,
+    public col: number,
+  ) {}
+
+  public get x(): number {
+    return this.col;
+  }
+
+  public get y(): number {
+    return this.row;
+  }
+}
+
 export abstract class Feature {
   constructor(
     public obj: GameObject,
     public active: boolean = true,
   ) {}
+
+  public get disabled() {
+    return !this.active;
+  }
 }
 
 export class GameObject {
