@@ -4,15 +4,15 @@ import { maxBy } from "lodash";
 import { PlayerComponent } from "@/views/Player";
 
 import { GameObject, Vector } from "./base";
-import { BoxCollider, CircleCollider } from "./colliders";
+import { BoxCollider } from "./colliders";
 import { Interactive } from "./features/interactive";
 import { FrameInfo } from "./runner";
 import { Sprite } from "./sprite";
 
-const PLAYER_COLLIDER_SIZE = 0.5;
-
 export class Player extends Sprite {
-  private collider: CircleCollider;
+  private collider: BoxCollider;
+  private startPosition: Vector;
+
   computedPlayerSpeed = 0;
   idleDuration = 0;
   dir: "up" | "right" | "down" | "left" = "down";
@@ -21,10 +21,10 @@ export class Player extends Sprite {
 
   constructor(row: number, col: number) {
     super("cat64", row, col, 2, 2);
-    this.collider = new CircleCollider(this, PLAYER_COLLIDER_SIZE);
-    // this.collider = new BoxCollider(this);
+    this.collider = new BoxCollider(this, new Vector(0.5, 0.5), 1, 1);
     this.collider.static = false;
     this.withFeature(this.collider).withFeatureClass(PlayerController);
+    this.startPosition = new Vector(row, col);
   }
 
   get View(): Component<{ sprite: Player }> {
@@ -32,6 +32,7 @@ export class Player extends Sprite {
   }
 
   public update(frame: FrameInfo): void {
+    this.startPosition = new Vector(this.row, this.col);
     if (this.computedPlayerSpeed === 0) {
       this.idleDuration += frame.delta;
 
@@ -39,6 +40,23 @@ export class Player extends Sprite {
         this.notify();
       }
     }
+  }
+
+  public lateUpdate(frame: FrameInfo): void {
+    const movedDistance = Math.abs(
+      Math.abs(this.col - this.startPosition.col) +
+        Math.abs(this.row - this.startPosition.row),
+    );
+    this.computedPlayerSpeed = movedDistance / frame.delta;
+    if (this.computedPlayerSpeed !== 0) {
+      this.idleDuration = 0;
+    }
+    this.velocity.row *= this.computedPlayerSpeed;
+    this.velocity.col *= this.computedPlayerSpeed;
+
+    frame.notifications.push(() => {
+      this.notify();
+    });
   }
 
   public get isMoving() {
@@ -66,8 +84,6 @@ class PlayerController extends Interactive {
   }
 
   processKeys(frame: FrameInfo, pressedKeys: Map<string, number>): void {
-    let [dx, dy] = [0, 0];
-    const step = this.player.speed * frame.delta;
     const lastKeyPress = maxBy(
       [
         this.keymaps.up,
@@ -79,47 +95,40 @@ class PlayerController extends Interactive {
         .filter(Boolean),
       (press) => press.ts,
     );
-    const [lastRow, lastCol] = [this.player.row, this.player.col];
 
-    if (lastKeyPress) {
-      switch (lastKeyPress.key) {
-        case this.keymaps.up:
-          dy = -1;
-          this.player.row -= step;
-          this.player.dir = "up";
-          break;
-        case this.keymaps.right:
-          dx = 1;
-          this.player.col += step;
-          this.player.dir = "right";
-          break;
-        case this.keymaps.down:
-          dy = 1;
-          this.player.row += step;
-          this.player.dir = "down";
-          break;
-        case this.keymaps.left:
-          dx = -1;
-          this.player.col -= step;
-          this.player.dir = "left";
-          break;
-        default:
-          break;
-      }
+    if (!lastKeyPress) {
+      return;
     }
 
-    const movedDistance = Math.abs(
-      Math.abs(this.player.col - lastCol) + Math.abs(this.player.row - lastRow),
-    );
-    this.player.computedPlayerSpeed = movedDistance / frame.delta;
-    if (this.player.computedPlayerSpeed !== 0) {
-      this.player.idleDuration = 0;
-    }
-    this.player.velocity.row = dy * this.player.computedPlayerSpeed;
-    this.player.velocity.col = dx * this.player.computedPlayerSpeed;
+    const step = this.player.speed * frame.delta;
 
-    frame.notifications.push(() => {
-      this.player.notify();
-    });
+    switch (lastKeyPress.key) {
+      case this.keymaps.up:
+        this.player.row -= step;
+        this.player.dir = "up";
+        this.player.velocity.col = 0;
+        this.player.velocity.row = -1;
+        break;
+      case this.keymaps.right:
+        this.player.col += step;
+        this.player.dir = "right";
+        this.player.velocity.col = 1;
+        this.player.velocity.row = 0;
+        break;
+      case this.keymaps.down:
+        this.player.row += step;
+        this.player.dir = "down";
+        this.player.velocity.col = 0;
+        this.player.velocity.row = 1;
+        break;
+      case this.keymaps.left:
+        this.player.col -= step;
+        this.player.dir = "left";
+        this.player.velocity.col = -1;
+        this.player.velocity.row = 0;
+        break;
+      default:
+        break;
+    }
   }
 }

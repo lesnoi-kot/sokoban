@@ -45,6 +45,9 @@ export class Runner {
     for (const p of this.processors) {
       p.process(frame);
     }
+    for (const obj of this.stage.objects) {
+      obj.lateUpdate(frame);
+    }
     for (const notify of frame.notifications) {
       notify();
     }

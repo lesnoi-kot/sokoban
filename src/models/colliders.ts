@@ -9,9 +9,6 @@ enum ColliderType {
   circle,
 }
 
-export const ORIGIN_CENTER = new DOMPointReadOnly(0.5, 0.5);
-export const ORIGIN_TOP_LEFT = new DOMPointReadOnly(0, 0);
-
 export abstract class Collider extends Feature {
   static $isCollider = Symbol("Collider");
 
@@ -20,7 +17,6 @@ export abstract class Collider extends Feature {
   constructor(
     obj: GameObject,
     public readonly type: ColliderType,
-    protected origin: DOMPoint,
   ) {
     super(obj);
     obj[Collider.$isCollider] = true;
@@ -38,29 +34,60 @@ export abstract class Collider extends Feature {
   public abstract get left(): number;
   public abstract get right(): number;
   public abstract get bottom(): number;
+  public abstract set top(top: number);
+  public abstract set left(left: number);
+  public abstract set right(right: number);
+  public abstract set bottom(top: number);
+
+  public get width(): number {
+    return this.right - this.left;
+  }
+
+  public get height(): number {
+    return this.bottom - this.top;
+  }
 }
 
 export class BoxCollider extends Collider {
   constructor(
     obj: GameObject,
-    public offset: DOMPoint = DOMPoint.fromPoint(ORIGIN_TOP_LEFT),
-    public height: number = obj.height,
-    public width: number = obj.width,
+    public offset: Vector = new Vector(0, 0),
+    private _height: number = obj.height,
+    private _width: number = obj.width,
   ) {
-    super(obj, ColliderType.box, DOMPoint.fromPoint(ORIGIN_TOP_LEFT));
+    super(obj, ColliderType.box);
   }
 
   public get top(): number {
-    return this.obj.top + this.offset.y;
+    return this.obj.top + this.offset.row;
   }
   public get left(): number {
-    return this.obj.left + this.offset.x;
+    return this.obj.left + this.offset.col;
   }
   public get right(): number {
-    return this.left + this.width;
+    return this.left + this._width;
   }
   public get bottom(): number {
-    return this.top + this.height;
+    return this.top + this._height;
+  }
+  public get width(): number {
+    return this._width;
+  }
+  public get height(): number {
+    return this._height;
+  }
+
+  public set top(top: number) {
+    this.obj.row = top - this.offset.row;
+  }
+  public set bottom(bottom: number) {
+    this.obj.row = bottom - this._height - this.offset.row;
+  }
+  public set left(left: number) {
+    this.obj.col = left - this.offset.col;
+  }
+  public set right(right: number) {
+    this.obj.col = right - this._width - this.offset.col;
   }
 }
 
@@ -68,29 +95,40 @@ export class CircleCollider extends Collider {
   constructor(
     obj: GameObject,
     public radius: number = obj.width / 2,
-    origin: DOMPoint = DOMPoint.fromPoint(ORIGIN_CENTER),
+    public origin: Vector = new Vector(0.5, 0.5),
   ) {
-    super(obj, ColliderType.circle, origin);
+    super(obj, ColliderType.circle);
   }
 
   public getCenter(): Vector {
     return new Vector(
-      this.obj.col + this.obj.width * this.origin.x,
       this.obj.row + this.obj.height * this.origin.y,
+      this.obj.col + this.obj.width * this.origin.x,
     );
   }
 
   public get top(): number {
     return this.getCenter().row - this.radius;
   }
+
   public get left(): number {
     return this.getCenter().col - this.radius;
   }
+
   public get right(): number {
     return this.getCenter().col + this.radius;
   }
+
   public get bottom(): number {
     return this.getCenter().row + this.radius;
+  }
+
+  public get width(): number {
+    return this.radius * 2;
+  }
+
+  public get height(): number {
+    return this.radius * 2;
   }
 }
 

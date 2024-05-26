@@ -109,6 +109,7 @@ export class GameObject {
   }
 
   public update(frame: FrameInfo): void {}
+  public lateUpdate(frame: FrameInfo): void {}
 
   public isCellInside(row: number, col: number): boolean {
     return (

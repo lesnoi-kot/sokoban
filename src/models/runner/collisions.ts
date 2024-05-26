@@ -18,23 +18,43 @@ export class CollisionProcessor extends Processor {
         if (subjCollider.hitTest(objCollider)) {
           if (subject instanceof Player) {
             if (subject.velocity.col > 0) {
-              if (!(subject.row >= obj.bottom || subject.bottom <= obj.top)) {
-                subject.col = obj.col - subject.width;
+              if (
+                !(
+                  subjCollider.top >= objCollider.bottom ||
+                  subjCollider.bottom <= objCollider.top
+                )
+              ) {
+                subjCollider.right = objCollider.left;
                 break;
               }
             } else if (subject.velocity.col < 0) {
-              if (!(subject.row >= obj.bottom || subject.bottom <= obj.top)) {
-                subject.col = obj.col + obj.width;
+              if (
+                !(
+                  subjCollider.top >= objCollider.bottom ||
+                  subjCollider.bottom <= objCollider.top
+                )
+              ) {
+                subjCollider.left = objCollider.right;
                 break;
               }
             } else if (subject.velocity.row > 0) {
-              if (!(subject.left >= obj.right || subject.right <= obj.left)) {
-                subject.row = obj.row - subject.height;
+              if (
+                !(
+                  subjCollider.left >= objCollider.right ||
+                  subjCollider.right <= objCollider.left
+                )
+              ) {
+                subjCollider.bottom = objCollider.top;
                 break;
               }
             } else if (subject.velocity.row < 0) {
-              if (!(subject.left >= obj.right || subject.right <= obj.left)) {
-                subject.row = obj.row + obj.height;
+              if (
+                !(
+                  subjCollider.left >= objCollider.right ||
+                  subjCollider.right <= objCollider.left
+                )
+              ) {
+                subjCollider.top = objCollider.bottom;
                 break;
               }
             }
